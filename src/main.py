@@ -49,6 +49,9 @@ class MyWindow(moderngl_window.WindowConfig):
         self.cull_face = False
 
         self.TessLevel = 1
+        self.GrassHeight = 1.0
+        self.GrassWidth = 0.1
+        self.GrassScale = 0.1
 
         self.query_debug_values = {}
         self.query = self.ctx.query(samples=False, time=True)
@@ -66,6 +69,7 @@ class MyWindow(moderngl_window.WindowConfig):
         self.camera.velocity = 1
         self.camera.position.xyz = (0.5, 0.5, 1.5)
         self.camera.pitch = -22
+        self.camera_active = True
 
         self.program = {
             'GRASS':
@@ -73,22 +77,24 @@ class MyWindow(moderngl_window.WindowConfig):
                     vertex_shader='./grass.vert',
                     tess_control_shader='./grass.tesc',
                     tess_evaluation_shader='./grass.tese',
+                    geometry_shader='./grass.geom',
                     fragment_shader='./grass.frag')
         }
-        # geometry_shader='./grass.geom',
-        # defines={
-        #     'NB_SEGMENTS': Tree.NB_SEGMENTS,
-        #     'NB_FACES': Tree.NB_FACES}),
 
+        scale = 2.0
         vertices = array('f', [
-            #position       #normals
-            0.0, 0.0, 0.0,  #0.0, 1.0, 0.0,
-            0.0, 0.0, 1.0,  #0.0, 1.0, 0.0,
-            1.0, 0.0, 0.0,  #0.0, 1.0, 0.0,
+            #position
+            0.0, 0.0, 0.0,
+            0.0, 0.0, scale,
+            scale, 0.0, 0.0,
 
-            0.0, 0.0, 1.0,  #0.0, 1.0, 0.0,
-            1.0, 0.0, 1.0,  #0.0, 1.0, 0.0,
-            1.0, 0.0, 0.0,  #0.0, 1.0, 0.0,
+            0.0, 0.0, scale,
+            scale, 0.0, scale,
+            scale, 0.0, 0.0,
+
+            0.0, 0.0, 0.0,
+            0.0, -scale, 0.0,
+            0.0, 0.0, scale,
         ])
 
         self.vbo = self.ctx.buffer(vertices)
@@ -100,20 +106,21 @@ class MyWindow(moderngl_window.WindowConfig):
 
     def update_uniforms(self, frametime):
         self.program['GRASS']['u_TessLevel'] = self.TessLevel
+        self.program['GRASS']['u_grassHeight'] = self.GrassHeight
+        self.program['GRASS']['u_grassWidth'] = self.GrassWidth
+        self.program['GRASS']['u_grassScale'] = self.GrassScale
 
         for str, program in self.program.items():
-            if 'viewMatrix' in program:
-                program['viewMatrix'].write(self.camera.matrix)
-            if 'projectionMatrix' in program:
-                program['projectionMatrix'].write(self.camera.projection.matrix)
+            if 'u_viewMatrix' in program:
+                program['u_viewMatrix'].write(self.camera.matrix)
+            if 'u_projectionMatrix' in program:
+                program['u_projectionMatrix'].write(self.camera.projection.matrix)
 
     def update(self, time_since_start, frametime):
         # Light.x = cos(time_since_start*0.2) * 6.0
         # Light.y = 6.0
         # Light.z = sin(time_since_start*0.2) * 6.0
         self.fps_counter.update(frametime)
-
-        # self.camera.look_at(vec=[0,0,0], pos=[0, 0, 0])
         self.update_uniforms(frametime)
 
     def render(self, time_since_start, frametime):
@@ -122,6 +129,7 @@ class MyWindow(moderngl_window.WindowConfig):
         self.ctx.enable_only(moderngl.CULL_FACE * self.cull_face | moderngl.DEPTH_TEST)
         self.ctx.wireframe = self.wireframe
 
+        self.ctx.clear(0.2, 0.2, 0.2)
         # self.ctx.screen.use()
 
         with self.query:

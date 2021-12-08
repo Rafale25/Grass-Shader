@@ -6,7 +6,9 @@ def resize(self, width: int, height: int):
 
 def key_event(self, key, action, modifiers):
     self.imgui.key_event(key, action, modifiers)
-    self.camera.key_input(key, action, modifiers)
+
+    if self.camera_active:
+        self.camera.key_input(key, action, modifiers)
 
     # if modifiers.shift:
     #     self.camera.velocity = 3
@@ -21,7 +23,8 @@ def mouse_drag_event(self, x, y, dx, dy):
     io = imgui.get_io()
     if io.want_capture_mouse: return
 
-    self.camera.rot_state(dx, dy)
+    if self.camera_active:
+        self.camera.rot_state(dx, dy)
 
     # self.camera.rot.x -= dy * 0.002
     # self.camera.rot.y -= dx * 0.002
