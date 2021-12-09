@@ -44,7 +44,11 @@ def imgui_newFrame(self, frametime):
         min_value=0.01,
         max_value=2.0)
 
-
+    c, self.WindStrength = imgui.slider_float(
+        label="wind strength",
+        value=self.WindStrength,
+        min_value=0.0,
+        max_value=0.5)
 
 
     imgui.end_group()

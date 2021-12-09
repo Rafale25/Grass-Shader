@@ -15,10 +15,12 @@ out vec3 f_color;
 uniform float u_grassHeight;
 uniform float u_grassWidth;
 uniform float u_grassScale;
+uniform float u_windStrength;
 
 uniform mat4 u_viewMatrix;
 uniform mat4 u_projectionMatrix;
 
+uniform float u_time;
 
 mat4 calcRotateMat4X(float radian) {
     return mat4(
@@ -104,29 +106,34 @@ void main() {
     float pitch = atan(sqrt(g_normal[0].z * g_normal[0].z + g_normal[0].x * g_normal[0].x), g_normal[0].y) + PI;
     mat4 rotateNormals = calcRotateMat4(vec3(0.0, yaw, pitch));
 
-    mat4 mat = mvp * transtateMatPos * rotateNormals * transtateMatOffset * rotateMat;
+    mat4 mat = mvp * transtateMatPos * rotateNormals * transtateMatOffset;// * rotateMat;
 
     // output initial geometry
-    f_color = vec3(0.5);
-    gl_Position = mvp * gl_in[0].gl_Position;
-    EmitVertex();
-    gl_Position = mvp * gl_in[1].gl_Position;
-    EmitVertex();
-    gl_Position = mvp * gl_in[2].gl_Position;
-    EmitVertex();
-    EndPrimitive();
+    // f_color = vec3(0.5);
+    // gl_Position = mvp * gl_in[0].gl_Position;
+    // EmitVertex();
+    // gl_Position = mvp * gl_in[1].gl_Position;
+    // EmitVertex();
+    // gl_Position = mvp * gl_in[2].gl_Position;
+    // EmitVertex();
+    // EndPrimitive();
 
     /*
     2 --- 3      -0.5,1 - 0.5,1
     |  \  |        |        |
     0 --- 1      -0.5,0 - 0.5,0
     */
-    vec3 p0 = vec3(-u_grassWidth, 0.0, 0.0) * u_grassScale;
-    vec3 p1 = vec3(u_grassWidth, 0.0, 0.0) * u_grassScale;
-    vec3 p2 = vec3(-u_grassWidth, u_grassHeight, 0.0) * u_grassScale;
-    vec3 p3 = vec3(u_grassWidth, u_grassHeight, 0.0) * u_grassScale;
+    vec4 p0 = vec4(-u_grassWidth, 0.0, 0.0, 1.0) * u_grassScale;
+    vec4 p1 = vec4(u_grassWidth, 0.0, 0.0, 1.0) * u_grassScale;
+    vec4 p2 = vec4(-u_grassWidth, u_grassHeight, 0.0, 1.0) * u_grassScale;
+    vec4 p3 = vec4(u_grassWidth, u_grassHeight, 0.0, 1.0) * u_grassScale;
 
-    vec3 wind_offset = vec3(0.0);//vec3(cos(center.x * 5.0), 0.0, sin(center.z * 5.0));
+    const float wind_speed = 2.0;
+    vec3 wind_offset = vec3(
+        sin(u_time * wind_speed + center.x) + sin(u_time * wind_speed + center.z*2.0),
+        0.0,
+        cos(u_time * wind_speed + center.x * 2.0) + cos(u_time + center.z * wind_speed)
+    );
 
     for (int i = 0 ; i < N_SEGMENTS ; ++i) {
         float c1 = easeInCubic(map(i+0, 0, N_SEGMENTS, 0.5, 0.95));
@@ -135,31 +142,31 @@ void main() {
         vec3 color1 = hsvTorgb(vec3(0.3, 1.0, c1));
         vec3 color2 = hsvTorgb(vec3(0.3, 1.0, c2));
 
-        float wind_force1 = easeInCubic(map(i+0, 0.0, N_SEGMENTS, 0.0, 1.0)) * 0.1;
-        float wind_force2 = easeInCubic(map(i+1, 0.0, N_SEGMENTS, 0.0, 1.0)) * 0.1;
+        float wind_force1 = easeInCubic(map(i+0, 0.0, N_SEGMENTS, 0.0, 1.0)) * u_windStrength;
+        float wind_force2 = easeInCubic(map(i+1, 0.0, N_SEGMENTS, 0.0, 1.0)) * u_windStrength;
 
-        vec3 wind_offset1 = wind_offset * wind_force1;
-        vec3 wind_offset2 = wind_offset * wind_force2;
+        vec4 wind_offset1 = vec4(wind_offset * wind_force1, 1.0);
+        vec4 wind_offset2 = vec4(wind_offset * wind_force2, 1.0);
 
         f_color = color1;
-        gl_Position = mat * vec4(p0 + wind_offset1, 1.0);
+        gl_Position = mat * (rotateMat * p0 + wind_offset1);
         EmitVertex();
         f_color = color2;
-        gl_Position = mat * vec4(p2 + wind_offset2, 1.0);
+        gl_Position = mat * (rotateMat * p2 + wind_offset2);
         EmitVertex();
         f_color = color1;
-        gl_Position = mat * vec4(p1 + wind_offset1, 1.0);
+        gl_Position = mat * (rotateMat * p1 + wind_offset1);
         EmitVertex();
         EndPrimitive();
 
         f_color = color1;
-        gl_Position = mat * vec4(p1 + wind_offset1, 1.0);
+        gl_Position = mat * (rotateMat * p1 + wind_offset1);
         EmitVertex();
         f_color = color2;
-        gl_Position = mat * vec4(p2 + wind_offset2, 1.0);
+        gl_Position = mat * (rotateMat * p2 + wind_offset2);
         EmitVertex();
         f_color = color2;
-        gl_Position = mat * vec4(p3 + wind_offset2, 1.0);
+        gl_Position = mat * (rotateMat * p3 + wind_offset2);
         EmitVertex();
         EndPrimitive();
 

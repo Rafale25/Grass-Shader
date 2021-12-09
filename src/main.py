@@ -18,7 +18,7 @@ from moderngl_window.opengl.vao import VAO
 # from moderngl_window import geometry
 
 from glm import vec3, vec4
-from math import pi, cos, sin, fabs
+from math import pi, cos, sin, fabs, fmod
 from random import uniform
 from array import array
 
@@ -32,8 +32,8 @@ def dump(obj):
 class MyWindow(moderngl_window.WindowConfig):
     title = 'Grass'
     gl_version = (4, 3)
-    window_size = (1280, 720)
-    fullscreen = False
+    window_size = (1920, 1080)
+    fullscreen = True
     resizable = False
     vsync = True
     resource_dir = './resources'
@@ -52,6 +52,9 @@ class MyWindow(moderngl_window.WindowConfig):
         self.GrassHeight = 1.0
         self.GrassWidth = 0.1
         self.GrassScale = 0.1
+        self.WindStrength = 0.05
+
+        self.start_time = time.time()
 
         self.query_debug_values = {}
         self.query = self.ctx.query(samples=False, time=True)
@@ -99,9 +102,14 @@ class MyWindow(moderngl_window.WindowConfig):
 
         self.vbo = self.ctx.buffer(vertices)
         self.vao = VAO(name="grass", mode=moderngl.TRIANGLES)
-        self.vao.buffer(self.vbo, '3f', ['v_vert'])
-        # self.vao.buffer(self.vbo, '3f 3f', ['v_vert', 'v_normal'])
+        self.vao.buffer(self.vbo, '3f', ['in_position'])
+        # self.vao.buffer(self.vbo, '3f', ['v_vert'])
         self.ctx.patch_vertices = 3 # for tesselation
+
+        self.scene = self.load_scene(path="./bunny.obj")
+
+        # dump(self.scene.meshes[0].vao)
+        # self.scene.apply_mesh_programs(self.program['GRASS'])
 
 
     def update_uniforms(self, frametime):
@@ -109,6 +117,8 @@ class MyWindow(moderngl_window.WindowConfig):
         self.program['GRASS']['u_grassHeight'] = self.GrassHeight
         self.program['GRASS']['u_grassWidth'] = self.GrassWidth
         self.program['GRASS']['u_grassScale'] = self.GrassScale
+        self.program['GRASS']['u_windStrength'] = self.WindStrength
+        self.program['GRASS']['u_time'] = time.time() - self.start_time
 
         for str, program in self.program.items():
             if 'u_viewMatrix' in program:
@@ -132,11 +142,23 @@ class MyWindow(moderngl_window.WindowConfig):
         self.ctx.clear(0.2, 0.2, 0.2)
         # self.ctx.screen.use()
 
+        # with self.query:
+        #     self.vao.render(
+        #         program=self.program['GRASS'],
+        #         mode=moderngl.PATCHES)
+        # self.query_debug_values['grass render'] = self.query.elapsed * 10e-7
+
+
         with self.query:
-            self.vao.render(
+            self.scene.meshes[0].vao.render(
                 program=self.program['GRASS'],
                 mode=moderngl.PATCHES)
-        self.query_debug_values['grass render'] = self.query.elapsed * 10e-7
+        self.query_debug_values['bunny render'] = self.query.elapsed * 10e-7
+
+        # self.scene.draw(
+        #     projection_matrix=self.camera.projection.matrix,
+        #     camera_matrix=self.camera.matrix,
+        # )
 
 
         # disables wireframe and depth_test for imgui
