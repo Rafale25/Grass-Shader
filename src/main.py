@@ -9,7 +9,8 @@ import time
 import moderngl
 import imgui
 import pyglet
-import glm
+from pyrr import Matrix44
+# import glm
 
 import moderngl_window
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
@@ -54,6 +55,8 @@ class MyWindow(moderngl_window.WindowConfig):
         self.GrassScale = 0.1
         self.WindStrength = 0.05
 
+        self.RandomOrientationStrenght = 0.0
+
         self.start_time = time.time()
 
         self.query_debug_values = {}
@@ -70,18 +73,22 @@ class MyWindow(moderngl_window.WindowConfig):
 
         self.camera.mouse_sensitivity = 0.1
         self.camera.velocity = 1
-        self.camera.position.xyz = (0.5, 0.5, 1.5)
+        self.camera.position.xyz = (0, 7, 7)
         self.camera.pitch = -22
         self.camera_active = True
 
         self.program = {
+            'MODEL':
+                self.load_program(
+                    vertex_shader='./shaders/model/shader.vert',
+                    fragment_shader='./shaders/model/shader.frag'),
             'GRASS':
                 self.load_program(
-                    vertex_shader='./grass.vert',
-                    tess_control_shader='./grass.tesc',
-                    tess_evaluation_shader='./grass.tese',
-                    geometry_shader='./grass.geom',
-                    fragment_shader='./grass.frag')
+                    vertex_shader='./shaders/grass/grass.vert',
+                    tess_control_shader='./shaders/grass/grass.tesc',
+                    tess_evaluation_shader='./shaders/grass/grass.tese',
+                    geometry_shader='./shaders/grass/grass.geom',
+                    fragment_shader='./shaders/grass/grass.frag')
         }
 
         scale = 2.0
@@ -106,10 +113,14 @@ class MyWindow(moderngl_window.WindowConfig):
         # self.vao.buffer(self.vbo, '3f', ['v_vert'])
         self.ctx.patch_vertices = 3 # for tesselation
 
-        self.scene = self.load_scene(path="./bunny.obj")
-
+        self.scene_bunny = self.load_scene(path="./bunny.obj")
+        self.scene_cow = self.load_scene(path="./cow.obj")
+        # self.modelMatrix = glm.scale(glm.mat4(1.0), glm.vec3(20.0))
+        # self.modelMatrix = Matrix44.create_from_scale(20.0)
         # dump(self.scene.meshes[0].vao)
-        # self.scene.apply_mesh_programs(self.program['GRASS'])
+
+        # print(type(self.camera.matrix))
+        # print(type(self.modelMatrix))
 
 
     def update_uniforms(self, frametime):
@@ -118,7 +129,10 @@ class MyWindow(moderngl_window.WindowConfig):
         self.program['GRASS']['u_grassWidth'] = self.GrassWidth
         self.program['GRASS']['u_grassScale'] = self.GrassScale
         self.program['GRASS']['u_windStrength'] = self.WindStrength
+        self.program['GRASS']['u_randomOrientationStrenght'] = self.RandomOrientationStrenght
         self.program['GRASS']['u_time'] = time.time() - self.start_time
+
+        # self.program['GRASS']['u_modelMatrix'] = self.modelMatrix
 
         for str, program in self.program.items():
             if 'u_viewMatrix' in program:
@@ -127,9 +141,6 @@ class MyWindow(moderngl_window.WindowConfig):
                 program['u_projectionMatrix'].write(self.camera.projection.matrix)
 
     def update(self, time_since_start, frametime):
-        # Light.x = cos(time_since_start*0.2) * 6.0
-        # Light.y = 6.0
-        # Light.z = sin(time_since_start*0.2) * 6.0
         self.fps_counter.update(frametime)
         self.update_uniforms(frametime)
 
@@ -148,16 +159,20 @@ class MyWindow(moderngl_window.WindowConfig):
         #         mode=moderngl.PATCHES)
         # self.query_debug_values['grass render'] = self.query.elapsed * 10e-7
 
+        # with self.query:
+        #     self.scene.meshes[0].vao.render(
+        #         program=self.program['MODEL'])
+        # self.query_debug_values['bunny render'] = self.query.elapsed * 10e-7
 
         with self.query:
-            self.scene.meshes[0].vao.render(
+            self.scene_bunny.meshes[0].vao.render(
                 program=self.program['GRASS'],
                 mode=moderngl.PATCHES)
-        self.query_debug_values['bunny render'] = self.query.elapsed * 10e-7
+        self.query_debug_values['grass bunny render'] = self.query.elapsed * 10e-7
 
         # self.scene.draw(
         #     projection_matrix=self.camera.projection.matrix,
-        #     camera_matrix=self.camera.matrix,
+        #     camera_matrix=self.camera.matrix * self.modelMatrix,
         # )
 
 

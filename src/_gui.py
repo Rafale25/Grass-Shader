@@ -50,6 +50,11 @@ def imgui_newFrame(self, frametime):
         min_value=0.0,
         max_value=0.5)
 
+    c, self.RandomOrientationStrenght = imgui.slider_float(
+        label="random orientation strength",
+        value=self.RandomOrientationStrenght,
+        min_value=0.0,
+        max_value=0.5)
 
     imgui.end_group()
 

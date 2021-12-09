@@ -5,8 +5,8 @@
 #define N_SEGMENTS 4
 
 layout (triangles) in;
-// layout (triangle_strip, max_vertices = 3*2 * N_SEGMENTS) out;
-layout (triangle_strip, max_vertices = 3+3*2 * N_SEGMENTS) out;
+layout (triangle_strip, max_vertices = 3*2 * N_SEGMENTS) out;
+// layout (triangle_strip, max_vertices = 3+3*2 * N_SEGMENTS) out;
 
 in vec3 g_normal[];
 
@@ -16,6 +16,7 @@ uniform float u_grassHeight;
 uniform float u_grassWidth;
 uniform float u_grassScale;
 uniform float u_windStrength;
+uniform float u_randomOrientationStrenght;
 
 uniform mat4 u_viewMatrix;
 uniform mat4 u_projectionMatrix;
@@ -62,19 +63,11 @@ mat4 calcTranslateMat4(vec3 v) {
     );
 }
 
-vec3 triangle_normal(vec3 p0, vec3 p1, vec3 p2) {
-    return normalize(cross(p1 - p0, p2 - p0));
-}
-
 vec3 hsvTorgb(vec3 c) {
     vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
     vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
-
-// float rand(vec2 co){
-//     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-// }
 
 float rand(float co) { return fract(sin(co*(91.3458)) * 47453.5453); }
 float rand(vec2 co){ return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453); }
@@ -106,7 +99,11 @@ void main() {
     float pitch = atan(sqrt(g_normal[0].z * g_normal[0].z + g_normal[0].x * g_normal[0].x), g_normal[0].y) + PI;
     mat4 rotateNormals = calcRotateMat4(vec3(0.0, yaw, pitch));
 
-    mat4 mat = mvp * transtateMatPos * rotateNormals * transtateMatOffset;// * rotateMat;
+    yaw = (rand(center.xyz) * 2.0*PI - PI) * u_randomOrientationStrenght;
+    pitch = (rand(center.zxy) * 2.0*PI - PI) * u_randomOrientationStrenght;
+    mat4 rotateRandom = calcRotateMat4(vec3(0.0, yaw, pitch));
+
+    mat4 mat = mvp * transtateMatPos * rotateNormals * transtateMatOffset;
 
     // output initial geometry
     // f_color = vec3(0.5);
@@ -128,7 +125,7 @@ void main() {
     vec4 p2 = vec4(-u_grassWidth, u_grassHeight, 0.0, 1.0) * u_grassScale;
     vec4 p3 = vec4(u_grassWidth, u_grassHeight, 0.0, 1.0) * u_grassScale;
 
-    const float wind_speed = 2.0;
+    const float wind_speed = 1.0;
     vec3 wind_offset = vec3(
         sin(u_time * wind_speed + center.x) + sin(u_time * wind_speed + center.z*2.0),
         0.0,
@@ -149,24 +146,24 @@ void main() {
         vec4 wind_offset2 = vec4(wind_offset * wind_force2, 1.0);
 
         f_color = color1;
-        gl_Position = mat * (rotateMat * p0 + wind_offset1);
+        gl_Position = mat * (rotateMat * rotateRandom * p0 + wind_offset1);
         EmitVertex();
         f_color = color2;
-        gl_Position = mat * (rotateMat * p2 + wind_offset2);
+        gl_Position = mat * (rotateMat * rotateRandom * p2 + wind_offset2);
         EmitVertex();
         f_color = color1;
-        gl_Position = mat * (rotateMat * p1 + wind_offset1);
+        gl_Position = mat * (rotateMat * rotateRandom * p1 + wind_offset1);
         EmitVertex();
         EndPrimitive();
 
         f_color = color1;
-        gl_Position = mat * (rotateMat * p1 + wind_offset1);
+        gl_Position = mat * (rotateMat * rotateRandom * p1 + wind_offset1);
         EmitVertex();
         f_color = color2;
-        gl_Position = mat * (rotateMat * p2 + wind_offset2);
+        gl_Position = mat * (rotateMat * rotateRandom * p2 + wind_offset2);
         EmitVertex();
         f_color = color2;
-        gl_Position = mat * (rotateMat * p3 + wind_offset2);
+        gl_Position = mat * (rotateMat * rotateRandom * p3 + wind_offset2);
         EmitVertex();
         EndPrimitive();
 
