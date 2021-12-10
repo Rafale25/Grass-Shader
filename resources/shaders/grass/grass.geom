@@ -2,7 +2,7 @@
 
 #define PI 3.1415926538
 
-#define N_SEGMENTS 4
+#define N_SEGMENTS 1
 
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 3*2 * N_SEGMENTS) out;
@@ -82,6 +82,10 @@ float easeInCubic(float x) {
     return x * x * x;
 }
 
+float easeOutCubic(float x) {
+    return 1.0 - pow(1.0 - x, 3.0);
+}
+
 void main() {
     vec3 center = (gl_in[0].gl_Position.xyz +
                     gl_in[1].gl_Position.xyz +
@@ -144,6 +148,21 @@ void main() {
 
         vec4 wind_offset1 = vec4(wind_offset * wind_force1, 1.0);
         vec4 wind_offset2 = vec4(wind_offset * wind_force2, 1.0);
+
+        /*
+        u_grassWidth = 1.0
+        N_SEGMENTS = 4
+        (u_grassWidth / (N_SEGMENTS)) = 0.25
+        (u_grassWidth / (N_SEGMENTS)) * (N_SEGMENTS) = 1.0
+        */
+
+        float width1 = easeOutCubic((1.0 / (N_SEGMENTS)) * ((N_SEGMENTS)-(i+0))) * u_grassWidth;
+        float width2 = easeOutCubic((1.0 / (N_SEGMENTS)) * ((N_SEGMENTS)-(i+1))) * u_grassWidth;
+
+        p0.x = -width1;
+        p1.x = width1;
+        p2.x = -width2;
+        p3.x = width2;
 
         f_color = color1;
         gl_Position = mat * (rotateMat * rotateRandom * p0 + wind_offset1);
