@@ -149,6 +149,7 @@ void main() {
         vec4 wind_offset1 = vec4(wind_offset * wind_force1, 1.0);
         vec4 wind_offset2 = vec4(wind_offset * wind_force2, 1.0);
 
+        // TODO: add initial angle (like if wind was already applied)
         /*
         u_grassWidth = 1.0
         N_SEGMENTS = 4

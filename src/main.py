@@ -50,8 +50,8 @@ class MyWindow(moderngl_window.WindowConfig):
         self.cull_face = False
 
         self.TessLevel = 1
-        self.GrassHeight = 1.0
-        self.GrassWidth = 0.1
+        self.GrassHeight = 4.0
+        self.GrassWidth = 0.03
         self.GrassScale = 0.1
         self.WindStrength = 0.05
 

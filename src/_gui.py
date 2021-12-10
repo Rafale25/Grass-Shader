@@ -29,13 +29,13 @@ def imgui_newFrame(self, frametime):
     c, self.GrassHeight = imgui.slider_float(
         label="height",
         value=self.GrassHeight,
-        min_value=0.1,
-        max_value=5.0)
+        min_value=0.05,
+        max_value=6.0)
 
     c, self.GrassWidth = imgui.slider_float(
         label="width",
         value=self.GrassWidth,
-        min_value=0.01,
+        min_value=0.001,
         max_value=0.2)
 
     c, self.GrassScale = imgui.slider_float(
@@ -48,7 +48,7 @@ def imgui_newFrame(self, frametime):
         label="wind strength",
         value=self.WindStrength,
         min_value=0.0,
-        max_value=0.5)
+        max_value=1.0)
 
     c, self.RandomOrientationStrenght = imgui.slider_float(
         label="random orientation strength",
