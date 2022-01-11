@@ -34,7 +34,7 @@ class MyWindow(moderngl_window.WindowConfig):
     title = 'Grass'
     gl_version = (4, 3)
     window_size = (1920, 1080)
-    fullscreen = False
+    fullscreen = True
     resizable = False
     vsync = True
     resource_dir = './resources'
@@ -207,8 +207,5 @@ class MyWindow(moderngl_window.WindowConfig):
         mouse_release_event,\
         unicode_char_entered
 
-def main():
-    MyWindow.run()
-
 if __name__ == "__main__":
-    main()
+    MyWindow.run()
